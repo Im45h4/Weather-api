@@ -1,21 +1,32 @@
 <?php
+// Check if a GET request is received with a 'city' parameter
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['city'])) {
+    // Get the city name from the URL parameter and encode it for URL safety
     $city = urlencode($_GET['city']);
-    $apiKey = 'YOUR_OPENWEATHERMAP_API_KEY'; // Replace with your OpenWeatherMap API key
+    
+    // Your OpenWeatherMap API Key (replace with your own)
+    $apiKey = 'YOUR_OPENWEATHERMAP_API_KEY'; // Replace with your API key
+    
+    // URL for OpenWeatherMap API request
     $apiUrl = "https://api.openweathermap.org/data/2.5/weather?q={$city}&units=metric&appid={$apiKey}";
 
+    // Fetch weather data from OpenWeatherMap API
     $response = file_get_contents($apiUrl);
     if ($response === FALSE) {
-        echo json_encode(['error' => 'Unable to fetch weather data']);
+        echo json_encode(['error' => 'Unable to fetch weather data']); // Error message if the API call fails
         exit;
     }
 
+    // Decode the JSON response from the API into a PHP array
     $data = json_decode($response, true);
+    
+    // Check if the API response was successful (status code 200)
     if ($data['cod'] !== 200) {
-        echo json_encode(['error' => $data['message']]);
+        echo json_encode(['error' => $data['message']]); // Show error message from the API
         exit;
     }
 
+    // If successful, return the temperature and weather description
     echo json_encode([
         'temp' => $data['main']['temp'],
         'description' => $data['weather'][0]['description']
@@ -31,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['city'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather App</title>
     <style>
+        /* Basic styles for the page layout */
         body {
             font-family: Arial, sans-serif;
             background: #f0f8ff;
@@ -47,12 +59,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['city'])) {
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+        /* Styling for the input field */
         input {
             padding: 10px;
             width: 200px;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
+        /* Styling for the button */
         button {
             padding: 10px 15px;
             margin-left: 10px;
@@ -62,9 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['city'])) {
             border-radius: 5px;
             cursor: pointer;
         }
+        /* Button hover effect */
         button:hover {
             background-color: #0056b3;
         }
+        /* Styling for the result section */
         #weather-result {
             margin-top: 20px;
             font-size: 1.2em;
@@ -74,30 +90,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['city'])) {
 <body>
     <div class="weather-app">
         <h1>Weather App</h1>
+        <!-- Input field for city name -->
         <input type="text" id="city" placeholder="Enter city name">
+        <!-- Button to trigger the weather fetch -->
         <button onclick="getWeather()">Get Weather</button>
+        <!-- Section where weather results will be displayed -->
         <div id="weather-result"></div>
     </div>
+
     <script>
+        // Function to fetch weather data when the button is clicked
         async function getWeather() {
+            // Get the city name entered by the user
             const city = document.getElementById('city').value;
+            
+            // If no city is entered, show an alert and stop the function
             if (!city) {
                 alert('Please enter a city name!');
                 return;
             }
 
             try {
+                // Send a GET request to the PHP backend with the city name
                 const response = await fetch(`?city=${city}`);
+                
+                // Parse the JSON response from the backend
                 const data = await response.json();
 
+                // If there's an error, display the error message
                 if (data.error) {
                     document.getElementById('weather-result').innerText = data.error;
                 } else {
+                    // Otherwise, display the temperature and description
                     const { temp, description } = data;
                     document.getElementById('weather-result').innerText = 
                         `Temperature: ${temp}°C, ${description}`;
                 }
             } catch (error) {
+                // If there was an issue with the fetch request, show a generic error message
                 document.getElementById('weather-result').innerText = 
                     'Error fetching weather data.';
             }
