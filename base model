@@ -1,0 +1,107 @@
+<?php
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['city'])) {
+    $city = urlencode($_GET['city']);
+    $apiKey = 'YOUR_OPENWEATHERMAP_API_KEY'; // Replace with your OpenWeatherMap API key
+    $apiUrl = "https://api.openweathermap.org/data/2.5/weather?q={$city}&units=metric&appid={$apiKey}";
+
+    $response = file_get_contents($apiUrl);
+    if ($response === FALSE) {
+        echo json_encode(['error' => 'Unable to fetch weather data']);
+        exit;
+    }
+
+    $data = json_decode($response, true);
+    if ($data['cod'] !== 200) {
+        echo json_encode(['error' => $data['message']]);
+        exit;
+    }
+
+    echo json_encode([
+        'temp' => $data['main']['temp'],
+        'description' => $data['weather'][0]['description']
+    ]);
+    exit;
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f8ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .weather-app {
+            text-align: center;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        input {
+            padding: 10px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            margin-left: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #weather-result {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="weather-app">
+        <h1>Weather App</h1>
+        <input type="text" id="city" placeholder="Enter city name">
+        <button onclick="getWeather()">Get Weather</button>
+        <div id="weather-result"></div>
+    </div>
+    <script>
+        async function getWeather() {
+            const city = document.getElementById('city').value;
+            if (!city) {
+                alert('Please enter a city name!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`?city=${city}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    document.getElementById('weather-result').innerText = data.error;
+                } else {
+                    const { temp, description } = data;
+                    document.getElementById('weather-result').innerText = 
+                        `Temperature: ${temp}°C, ${description}`;
+                }
+            } catch (error) {
+                document.getElementById('weather-result').innerText = 
+                    'Error fetching weather data.';
+            }
+        }
+    </script>
+</body>
+</html>
